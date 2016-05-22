@@ -26,21 +26,6 @@ def sortTupleArray ( array, index ):
     return array;
 
 
-def buildDict (words_dictionary, dictionary_filename, dictionary_size):
-    with open(dictionary_filename) as dict:
-        head = [next(dict) for x in xrange(dictionary_size)]
-
-        for line in head:
-            words = line.decode("utf-8").split("\t")
-
-            actualWord = common.remove_accents(unicode(words[0]).lower())
-            if (not actualWord in words_dictionary):
-                words_dictionary[actualWord] = [(words[0], words[1])]
-            else:
-                words_dictionary[actualWord].append((words[0], words[1]))
-
-
-
 def findCandidates ( inputWord, words_dictionary):
     list = []
     if (inputWord in words_dictionary):
@@ -49,18 +34,10 @@ def findCandidates ( inputWord, words_dictionary):
     return list;
 
 def findMostFrequent ( inputWord, words_dictionary ):
-    list = []
     if (inputWord in words_dictionary):
-        list = words_dictionary[inputWord]
-    value=0.0
-    word = ""
+        return words_dictionary[inputWord];
 
-    for item in list:
-        if (float(value)<float(item[1])):
-            value=item[1]
-            word = item[0]
-
-    return word;
+    return "";
 
 # Corrects cases, for example:
 # Peter, péter -> Péter
@@ -133,9 +110,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--dsize", help="Dictionary size",type=int, default=500000)
     parser.add_argument("-d", "--dict", help="Dictionary filename",type=str, default="../Resources/HU_dict")
-    parser.add_argument('-a', "--adv", action='store_true',  help="Collect advanced statistics. Input needs to be diacreted!")
     parser.add_argument('--ngram', dest='ngram_enabled', help="NGram enabled", action='store_true')
-    parser.add_argument("-n", "--n", help="Ngram number",type=int, default=5)
+    parser.add_argument("-n", "--n", help="N value for N-gram, such as 1,2,3,4,5..",type=int, default=2)
     parser.add_argument("-ndict", "--ndict", help="Ngram dictionary file",type=str, default="Resources/HU_5gram_dict")
     parser.add_argument("-nsize", "--nsize", help="Ngram dictionary size",type=int, default=1133518)
     parser.add_argument('--timer', dest='timer', help="Timer enabled", action='store_true')
@@ -146,36 +122,35 @@ def main():
 
     dictionary_size = args.dsize
     dictionary_filename = args.dict
+
+
     timer_enabled = args.timer
-    advanced_stat = args.adv
     ngram_enabled = args.ngram_enabled
     accents = args.accents
     # N-gram parameter
-    N = args.n
-    ngram_diff = int(math.floor(N/2))
 
+    ngram_diff = args.n
+    N = (2*ngram_diff)+1
+    ngram_dictname = args.ndict
+    ngram_dictsize = args.nsize
     # If timer is enabled, start timer
     if (timer_enabled):
         start = time.time()
 
-    if (advanced_stat):
-        #Advanced stats
-        OOV_COUNT = 0
-        BAD_DIACRITICS_COUNT = 0
-        GOOD_DIACRITICS_COUNT = 0
+    
 
     words_dictionary = {}
     ngram_dict = {}
-    buildDict(words_dictionary, dictionary_filename, dictionary_size)
-
+    common.buildDict(words_dictionary, dictionary_filename, dictionary_size)
+    
     if (ngram_enabled == True):
-        buildDict(ngram_dict, args.ndict, args.nsize)
+        common.buildDict(ngram_dict, ngram_dictname, ngram_dictsize)
 
     padding_char = common.getPaddingChar()
 
-    buffer = []
+    word_buffer = []
     for i in range(0,N):
-        buffer.append("")
+        word_buffer.append("")
 
     initCounter = 0
 
@@ -188,28 +163,15 @@ def main():
         if (ngram_enabled == False):
             deaccented_word = deaccent(text)
             accented_word = accent(deaccented_word, words_dictionary, ngram_enabled, ngram_dict, ngram_diff, accents, "","")
-            if (advanced_stat):
-                candidates = findCandidates(deaccented_word, words_dictionary)
-                if (text == accented_word):
-                    GOOD_DIACRITICS_COUNT += 1
-                else:
-                    candidates = findCandidates(deaccented_word, words_dictionary)
-                    candidatesText = ','.join([str(i[0]) for i in candidates])
-                    if (text in candidatesText):
-                        BAD_DIACRITICS_COUNT +=1
-                        print (text + "\t"+accented_word + "\t" + "BAD")
-                    else:
-                        OOV_COUNT +=1
-                        print (text + "\t"+accented_word + "\t" + "OOV")
-                    print (candidatesText)
-            else:
-                print (accented_word)
+            print (accented_word)
         else:
             if (initCounter < ngram_diff):
                 initCounter += initCounter + 1
+                word_buffer.pop(0)
+                word_buffer.append(text)
 
             else:
-                accented_word = accentWithNgram(buffer, N, ngram_diff, words_dictionary, accents, ngram_dict,
+                accented_word = accentWithNgram(word_buffer, N, ngram_diff, words_dictionary, accents, ngram_dict,
                                                 padding_char, text)
                 print (accented_word)
 
@@ -217,15 +179,11 @@ def main():
 
     # Last ngram_diff iterations
     for i in range(0,ngram_diff):
-        accented_word = accentWithNgram(buffer, N, ngram_diff, words_dictionary, accents, ngram_dict,
+        accented_word = accentWithNgram(word_buffer, N, ngram_diff, words_dictionary, accents, ngram_dict,
                                                 padding_char, "")
         print (accented_word)
 
     # End
-    if (advanced_stat):
-        print ("OOV Count: "+str(OOV_COUNT))
-        print ("BAD Count: "+str(BAD_DIACRITICS_COUNT))
-        print ("GOOD Count: "+str(GOOD_DIACRITICS_COUNT))
     # Print timer info
     if (timer_enabled):
         end = time.time()

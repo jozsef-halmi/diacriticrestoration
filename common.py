@@ -26,6 +26,8 @@ def remove_accents(input_str):
 def getPaddingChar():
     return ' '
 
+
+    
 def ngramAccent ( inputWord, nDict, nDiff, accents,  nPrevStr, nFollStr, paddingChar ):
     outputWord = ""
     wordStartIndex = len(nPrevStr)
@@ -50,28 +52,19 @@ def ngramAccent ( inputWord, nDict, nDiff, accents,  nPrevStr, nFollStr, padding
 
             part = ''.join(part)
 
-            possible_solutions = []
+            candidate = ""
 
             if (part in nDict):
-                possible_solutions= nDict[part]
-
-            value=0.0
-            ngram = ""
-            # Find the most frequent N-gram
-            for item in possible_solutions:
-                if (float(value)<float(item[1])):
-                    value=item[1]
-                    ngram = item[0].decode("utf-8")
-
-            if (ngram != ""):
-                #print ('ngram: '+ngram + ', ' + ngram[diff])
+                candidate= nDict[part]
+                
+            if (candidate != ""):
                 # Accent the character
                 if (character.upper() == character):
                     # It was an upper case character
-                    outputWord+= unicode(ngram[nDiff].upper())
+                    outputWord+= unicode(candidate[nDiff].upper())
                 else:
                     # It was a lower case character
-                    outputWord+= unicode(ngram[nDiff])
+                    outputWord+= unicode(candidate[nDiff])
             else:
                 outputWord += character
 
@@ -84,3 +77,42 @@ def ngramAccent ( inputWord, nDict, nDiff, accents,  nPrevStr, nFollStr, padding
     outputWord = outputWord.strip()
     return outputWord;
 
+# The function returns a boolean value, representing
+# whether the input string contains accentable character(s) or not.
+def isAccentable( str, accent_string ):
+    if any((c in accent_string) for c in str):
+        return True
+    else:
+        return False
+
+# Returns the line count of a file
+def fileLineCount(fname):
+    with open(fname) as f:
+        for i, l in enumerate(f):
+            pass
+    return i + 1
+    
+    
+# Builds up the dictionary used in diacritic restoration 
+def buildDict (words_dictionary, dictionary_filename, dictionary_size):
+
+    # If the given dictionary size is larger than the given dictionary size, use that instead
+    dictionary_max = fileLineCount(dictionary_filename)
+    # Check if given number is not greater than the dictionary real size
+    if (dictionary_max<dictionary_size):
+        # The real length will be the minimum of the two values
+        dictionary_size = dictionary_max
+
+    with open(dictionary_filename) as dict:
+        head = [next(dict) for x in xrange(dictionary_size)]
+
+        for line in head:
+            words = line.decode("utf-8").split("\t")
+
+            actualWord = remove_accents(unicode(words[0]).lower())
+            if (not actualWord in words_dictionary):
+                words_dictionary[actualWord] = words[0]
+            #else:
+            #    words_dictionary[actualWord].append((words[0], words[1]))
+
+    

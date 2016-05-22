@@ -25,18 +25,25 @@ from importlib import import_module
 # Import common module for shared operations
 common = import_module("common")
 
-# Accents word with n-gram solution using local context
+def buildDict(words_dictionary, dictionary_temp):
+    # Fill the dictionary
+    for iter in dictionary_temp:
+        try:
+            if (not common.remove_accents(unicode(iter[0])) in words_dictionary):
+                words_dictionary[common.remove_accents(unicode(iter[0]))] = [(iter[0],iter[1])]
+            else:
+                words_dictionary[iter[0]].append((iter[0],iter[1]))
+
+        except:
+            sys.exc_info()[0]
+
 def accentWithNgram(buffer, deaccented, padding_char, diff, N, accents,words_dictionary):
-    # Remove first unnecessary element
     buffer.pop(0)
-
-    # Append the new one
     buffer.append(deaccented)
-
-    # Create local context
     prevText = padding_char.join(buffer[0:diff])
     follText = padding_char.join(buffer[diff+1:N])
     word = buffer[diff]
+
 
     # Invoke the shared NGram accent method
     word = common.ngramAccent(word,words_dictionary, diff, accents,prevText, follText, padding_char)
@@ -45,10 +52,9 @@ def accentWithNgram(buffer, deaccented, padding_char, diff, N, accents,words_dic
 def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("-n", "--ngram", help="N value for N-gram, such as 1,2,3,4,5..",type=int, default=2)
+    parser.add_argument("-n", "--ngram", help="N value for N-gram, such as 3 or 5",type=int, default=5)
     parser.add_argument('--timer', dest='timer', help="Timer enabled", action='store_true')
     parser.add_argument('-d', '--dict', dest='dict', help="Dictionary file name", default="../Resources/HU_5gram")
-    parser.add_argument('-s', '--dsize', dest='dsize', help="Dictionary size in lines")
     parser.add_argument('-a', '--accents', type=str, default='áaéeíióoöoőoúuüuűu',
                    help='accent mapping')
     parser.set_defaults(feature=False)
@@ -57,11 +63,11 @@ def main():
     timer_enabled = args.timer
 
     accents = args.accents
-    dictionary_size = int(args.dsize)
+
 
     # N-gram parameter
-    N = (args.ngram*2)+1
-    diff = args.ngram
+    N = args.ngram
+    diff = int(math.floor(N/2))
 
     # Start timer if enabled
     if (timer_enabled):
@@ -70,20 +76,19 @@ def main():
     # Get the dictionary for the ngrams
     dictionary_filename = args.dict
 
-
     # Declare the dictionary
     words_dictionary = {}
-    #dictionary_temp = list(csv.reader(open(dictionary_filename,'r',encoding='utf8'), delimiter='\t'))
+    dictionary_temp = list(csv.reader(open(dictionary_filename,'r',encoding='utf8'), delimiter='\t'))
 
     # Build dictionary
-    common.buildDict(words_dictionary, dictionary_filename, dictionary_size)
+    buildDict(words_dictionary, dictionary_temp)
 
     # Get the shared padding char
     padding_char = common.getPaddingChar()
 
-    word_buffer = []
+    buffer = []
     for i in range(0,N):
-        word_buffer.append("")
+        buffer.append("")
 
     initCounter = 0
     # read every line of the input
@@ -91,17 +96,14 @@ def main():
         #TEXT = l.translate(None, '()?,.:{}[]')
         TEXT = l.decode("utf-8")
         TEXT = TEXT.rstrip('\n')  # strip newline from the end of the line
-        if (common.isAccentable(TEXT, accents)):
-            TEXT = common.replace(TEXT)
+        TEXT = common.replace(TEXT)
         deaccented = common.remove_accents(unicode(TEXT))
         if (initCounter < diff):
-            initCounter += 1
-            word_buffer.pop(0)
-            word_buffer.append(deaccented)
+            initCounter += initCounter + 1
 
         else:
             # Invoke the shared NGram accent method
-            word = accentWithNgram(word_buffer, deaccented, padding_char, diff,N,
+            word = accentWithNgram(buffer, deaccented, padding_char, diff,N,
                                       accents, words_dictionary)
 
             print (word)
@@ -109,7 +111,7 @@ def main():
     # Last ngram_diff iterations
     for i in range(0,diff):
         #Invoke the shared NGram accent method
-        word = accentWithNgram(word_buffer, "", padding_char, diff,N,
+        word = accentWithNgram(buffer, "", padding_char, diff,N,
                                   accents, words_dictionary)
         print (word)
 
