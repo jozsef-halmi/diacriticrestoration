@@ -47,7 +47,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-n", "--ngram", help="N value for N-gram, such as 1,2,3,4,5..",type=int, default=2)
     parser.add_argument('--timer', dest='timer', help="Timer enabled", action='store_true')
-    parser.add_argument('-d', '--dict', dest='dict', help="Dictionary file name", default="../Resources/HU_5gram")
+    parser.add_argument('-d', '--dict', dest='dict', help="Dictionary file name", default="../Resources/HU_2gram_dict")
     parser.add_argument('-s', '--dsize', dest='dsize', help="Dictionary size in lines")
     parser.add_argument('-a', '--accents', type=str, default='áaéeíióoöoőoúuüuűu',
                    help='accent mapping')

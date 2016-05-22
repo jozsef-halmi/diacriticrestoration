@@ -112,7 +112,7 @@ def main():
     parser.add_argument("-d", "--dict", help="Dictionary filename",type=str, default="../Resources/HU_dict")
     parser.add_argument('--ngram', dest='ngram_enabled', help="NGram enabled", action='store_true')
     parser.add_argument("-n", "--n", help="N value for N-gram, such as 1,2,3,4,5..",type=int, default=2)
-    parser.add_argument("-ndict", "--ndict", help="Ngram dictionary file",type=str, default="Resources/HU_5gram_dict")
+    parser.add_argument("-ndict", "--ndict", help="Ngram dictionary file",type=str, default="Resources/HU_2gram_dict")
     parser.add_argument("-nsize", "--nsize", help="Ngram dictionary size",type=int, default=1133518)
     parser.add_argument('--timer', dest='timer', help="Timer enabled", action='store_true')
     parser.add_argument('--accents', type=str, default='áaéeíióoöoőoúuüuűu',
